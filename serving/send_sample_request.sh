@@ -8,7 +8,7 @@ cd $CURDIR
 one_run=$(cat << 'EOF'
 {
         "model": "llava_image_chat",
-        "image_path" : "/ML-A100/home/peter/Multimodal-LLaVA/llava/eval/serving/cat.jpg",
+        "image_path" : "/ML-A100/home/peter/multimodal_arch/serving/cat.jpg",
         "messages":
         [
           {
@@ -24,7 +24,7 @@ EOF
 remote_image_run=$(cat << 'EOF'
 {
         "model": "llava_image_chat",
-        "image_path" : "/ML-A100/home/peter/Multimodal-LLaVA/llava/eval/serving/cat.jpg",
+        "image_path" : "/ML-A100/home/peter/multimodal_arch/serving/cat.jpg",
         "messages":
         [
           {
@@ -40,7 +40,7 @@ EOF
 multi_run=$(cat << 'EOF'
 {
         "model": "llava_image_chat",
-        "image_path" : "/ML-A100/home/peter/Multimodal-LLaVA/llava/eval/serving/cat.jpg",
+        "image_path" : "/ML-A100/home/peter/multimodal_arch/serving/cat.jpg",
         "messages":
         [
           {

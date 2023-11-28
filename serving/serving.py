@@ -21,7 +21,7 @@ from llava.conversation import conv_templates, SeparatorStyle
 from llava.utils import disable_torch_init
 from llava.model.builder import load_pretrained_model
 from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
-from llava.eval.ocr import paddle_ocr
+from third_party.ocr import paddle_ocr
 
 logger = logging.getLogger(__name__)
 
