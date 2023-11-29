@@ -1,6 +1,7 @@
 import os
 import argparse
 import logging
+from threading import Lock
 
 import copy
 import fastapi
@@ -31,6 +32,7 @@ tokenizer = None
 model = None
 ocr = None
 image_processor = None
+lock = Lock()
 
 # 记录一下 输入=key, 推理使用=value
 chat_role_dict = {
@@ -61,6 +63,7 @@ def parse_inputs():
     parser.add_argument("--conv-mode", type=str, default="cllava_v1")
     args = parser.parse_args()
     return args
+
 
 def construct_prompt(conversations):
     assert len(conversations) > 0
@@ -157,29 +160,37 @@ def get_inference_outputs(request, input_ids, image_tensor):
     return outputs.strip(), finish_reason
 
 
-# TODO
-# async method
 @app.post('/v1/chat/image_completions')
-def create_chat_image_completions(request: ChatImageCompletionRequest,
+async def create_chat_image_completions(request: ChatImageCompletionRequest,
                                   raw_request: Request):
     assert tokenizer is not None, 'tokenizer is None'
-    logger.debug(f'request.image_path = {request.image_path}')
-    logger.debug(f'request.messages = {request.messages}')
-    logger.debug(f'request.max_tokens = {request.max_tokens}')
 
-    image_tensor, ocr_prompt = get_image_tensor_and_ocr(request)
+    lock.acquire()
+    response = None
+    try:
+        logger.debug(f'request.image_path = {request.image_path}')
+        logger.debug(f'request.messages = {request.messages}')
+        logger.debug(f'request.max_tokens = {request.max_tokens}')
 
-    prompt = construct_prompt(request.messages)
-    prompt = paddle_ocr.append_ocr_prompt_to_prompt(ocr_prompt, prompt)
-    print(f"\nprompt:{prompt}\n")
-    logger.debug(f'next_role=ASSISTANT\nprompt={prompt}\n')
-    input_ids = get_input_ids(request, prompt)
-    outputs, finish_reason = get_inference_outputs(request, input_ids, image_tensor)
-    logger.debug(f'outputs={outputs}')
+        image_tensor, ocr_prompt = get_image_tensor_and_ocr(request)
 
-    response = ChatImageCompletionResponse(
-        message={'role': 'assistant', 'content': outputs},
-        finish_reason=finish_reason)
+        prompt = construct_prompt(request.messages)
+        prompt = paddle_ocr.append_ocr_prompt_to_prompt(ocr_prompt, prompt)
+        print(f"\nprompt:{prompt}\n")
+        logger.debug(f'next_role=ASSISTANT\nprompt={prompt}\n')
+        input_ids = get_input_ids(request, prompt)
+        outputs, finish_reason = get_inference_outputs(request, input_ids, image_tensor)
+        logger.debug(f'outputs={outputs}')
+
+        response = ChatImageCompletionResponse(
+            message={'role': 'assistant', 'content': outputs},
+            finish_reason=finish_reason)
+    except Exception as e:
+        response = ChatImageCompletionResponse(
+            message={'role': 'assistant', 'content': ""},
+            finish_reason="error")
+    finally:
+        lock.release()
     return response
 
 
